@@ -1,217 +1,218 @@
 # tinypng-like-compressor
 
-[English README](./README_EN.md)
+[中文说明](./README_ZH.md)
 
-一个面向本地工作流的批量图片压缩工具，适合处理 UI 截图、流程图、运营素材、插画首图等常见资源。在 PNG 为主的场景下，压缩风格和体积表现通常可以接近 TinyPNG 的常见输出。
+A local-first batch image compression tool for UI screenshots, diagrams, marketing assets, and cover illustrations. In PNG-heavy workflows, its compression style and size reduction can often get reasonably close to typical TinyPNG output.
 
-> 本项目与 TinyPNG 无关联、无官方背书，也不是其官方实现。
+> This project is not affiliated with, endorsed by, or connected to TinyPNG.
 
-## 目录
+## Table of Contents
 
-- [项目简介](#项目简介)
-- [核心能力](#核心能力)
-- [适用场景](#适用场景)
-- [示例效果](#示例效果)
-- [工作原理](#工作原理)
-- [环境要求](#环境要求)
-- [安装](#安装)
-- [快速开始](#快速开始)
-- [命令行用法](#命令行用法)
-- [输出规则](#输出规则)
-- [压缩策略](#压缩策略)
-- [工具探测与回退机制](#工具探测与回退机制)
-- [项目结构](#项目结构)
-- [限制说明](#限制说明)
+- [Overview](#overview)
+- [Capabilities](#capabilities)
+- [Use Cases](#use-cases)
+- [Example Result](#example-result)
+- [How It Works](#how-it-works)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [CLI Usage](#cli-usage)
+- [Output Rules](#output-rules)
+- [Compression Strategy](#compression-strategy)
+- [Tool Detection and Fallbacks](#tool-detection-and-fallbacks)
+- [Project Structure](#project-structure)
+- [Limitations](#limitations)
+- [Links](#links)
 
-## 项目简介
+## Overview
 
-`tinypng-like-compressor` 提供一个纯本地、可批量执行的图片压缩方案，目标不是“统一强压所有格式”，而是在真实设计与内容生产流程中，用更低的接入成本拿到稳定、可接受的体积收益。
+`tinypng-like-compressor` is a pure local batch compression workflow. The goal is not to aggressively squeeze every format with one fixed setting, but to provide a practical, low-friction compression path that works well in real design and content pipelines.
 
-项目默认支持：
+Supported workflows include:
 
-- 单文件压缩
-- 多文件批量压缩
-- 单目录递归扫描
-- 多目录批量处理
-- 压缩结果自动择优保留
+- single file compression
+- multiple file compression
+- recursive folder processing
+- multi-folder batch processing
+- automatic keep-the-smaller-result behavior
 
-## 核心能力
+## Capabilities
 
-- 支持 `png`、`jpg`、`jpeg`、`webp`、`avif`
-- 文件夹默认递归扫描，可关闭递归
-- 支持输出到新目录，也支持原地覆盖
-- 当压缩后体积不降反升时，自动保留原文件
-- 自动探测本地编码器，按可用能力选择最佳压缩链路
-- 缺失外部工具时，可回退到 Pillow，macOS 下 JPEG 还可回退到 `sips`
+- Supports `png`, `jpg`, `jpeg`, `webp`, `avif`
+- Recursively scans folders by default, with an option to disable recursion
+- Writes output to a new directory or overwrites files in place
+- Keeps the original file when recompression is larger
+- Detects available local encoders and chooses the best path automatically
+- Falls back to Pillow when external tools are missing, with extra JPEG fallback via `sips` on macOS
 
-## 适用场景
+## Use Cases
 
-- 设计稿导出的 PNG 截图
-- UI 图标、弹窗、流程图、信息图
-- 文章封面图、活动运营图
-- 需要在本地离线批量处理的素材目录
+- exported PNG screenshots from design tools
+- UI icons, dialog screenshots, flowcharts, and diagrams
+- article covers and campaign assets
+- local offline batch processing for asset folders
 
-如果你的主要素材是已经高度压缩过的 JPEG，收益通常会低于 PNG 场景，这属于编码特性差异，不是脚本异常。
+If your inputs are mostly already heavily compressed JPEGs, the savings will usually be lower than PNG-heavy cases. That is expected codec behavior.
 
-## 示例效果
+## Example Result
 
-原图 `example/panda.png`，约 `858KB`：
+Original image `example/panda.png`, about `858KB`:
 
 ![Original example](./example/panda.png)
 
-压缩后 `example/panda_compressed.png`，约 `234KB`：
+Compressed image `example/panda_compressed.png`, about `234KB`:
 
 ![Compressed example](./example/panda_compressed.png)
 
-## 工作原理
+## How It Works
 
-脚本会先识别输入类型，再根据本地可用工具选择对应压缩策略：
+The script detects the input format and then selects the best available compression path from local tools:
 
-1. 扫描输入文件或目录，构建待处理任务列表。
-2. 识别图片真实格式，而不是只看扩展名。
-3. 优先调用外部编码器执行压缩。
-4. 若编码器缺失，则按格式回退到 Pillow 或系统工具。
-5. 比较压缩前后体积，仅在结果更小时写入目标路径。
+1. Scan input files or folders and build a job list.
+2. Detect the actual image format instead of trusting only the filename extension.
+3. Prefer external encoders when available.
+4. Fall back to Pillow or system tools when required.
+5. Compare original and compressed sizes, and only write the new file when it is smaller.
 
-这个设计的核心目标是稳定，而不是在单一格式上追求极限参数。
+The design goal is predictable, practical output rather than format-specific parameter tuning.
 
-## 环境要求
+## Requirements
 
 - Python 3.9+
-- macOS、Linux 常见本地环境
-- 可选依赖：`pngquant`、`oxipng`、`mozjpeg`、`webp`、`libavif`
+- Common local macOS or Linux environment
+- Optional encoders: `pngquant`, `oxipng`, `mozjpeg`, `webp`, `libavif`
 
-推荐尽量安装完整编码器集合，以获得更接近预期的压缩结果。
+Installing the full encoder set is recommended for better results.
 
-## 安装
+## Installation
 
-### 1. 创建虚拟环境
+### 1. Create a virtual environment
 
 ```bash
 python3 -m venv .venv
 ```
 
-### 2. 安装 Python 依赖
+### 2. Install Python dependencies
 
 ```bash
 ./.venv/bin/pip install -r requirements-local.txt
 ```
 
-### 3. 安装可选编码器
+### 3. Install optional encoders
 
-推荐安装以下工具：
+Recommended tools:
 
 - `pngquant`
 - `oxipng`
-- `mozjpeg` 提供的 `cjpeg`
-- `webp` 提供的 `cwebp`
-- `libavif` 提供的 `avifenc`
+- `mozjpeg` (`cjpeg`)
+- `webp` (`cwebp`)
+- `libavif` (`avifenc`)
 
-在 macOS 上通常可以通过 Homebrew 安装；在 Linux 上可通过系统包管理器安装。编码器不是全部强制依赖，但安装越完整，实际效果通常越好。
+On macOS these are commonly installed with Homebrew. On Linux, use your system package manager. They are not all mandatory, but the more complete your toolchain is, the better the compression results tend to be.
 
-## 快速开始
+## Quick Start
 
-压缩一个文件夹：
+Compress a folder:
 
 ```bash
 python3 compress_images.py ./images
 ```
 
-输出到指定目录：
+Write output to a dedicated folder:
 
 ```bash
 python3 compress_images.py ./images -o ./dist_images
 ```
 
-原地覆盖源文件：
+Overwrite originals in place:
 
 ```bash
 python3 compress_images.py ./images --in-place
 ```
 
-查看完整帮助：
+Show full help:
 
 ```bash
 python3 compress_images.py --help
 ```
 
-## 命令行用法
+## CLI Usage
 
 ```bash
 python3 compress_images.py INPUT [INPUT ...] [--output OUTPUT_DIR] [--in-place] [--overwrite] [--no-recursive] [--verbose]
 ```
 
-参数说明：
+Arguments:
 
-- `INPUT [INPUT ...]`：一个或多个图片文件、目录
-- `-o, --output`：输出目录
-- `--in-place`：直接覆盖原文件
-- `--overwrite`：目标文件已存在时允许覆盖
-- `--no-recursive`：目录输入时只扫描当前层级
-- `--verbose`：输出逐文件处理日志
+- `INPUT [INPUT ...]`: one or more image files or folders
+- `-o, --output`: output directory
+- `--in-place`: write results back to the source files
+- `--overwrite`: overwrite existing output files
+- `--no-recursive`: only scan the current folder level
+- `--verbose`: print one line per processed file
 
-常见示例：
+Examples:
 
-压缩整个目录：
+Compress a directory:
 
 ```bash
 python3 compress_images.py ./images
 ```
 
-同时处理多个目录：
+Compress multiple directories:
 
 ```bash
 python3 compress_images.py ./design ./screenshots -o ./compressed_output
 ```
 
-同时处理多个文件和目录：
+Compress mixed files and folders:
 
 ```bash
 python3 compress_images.py ./a.png ./b.jpg ./assets
 ```
 
-关闭递归扫描：
+Disable recursive scan:
 
 ```bash
 python3 compress_images.py ./images --no-recursive
 ```
 
-显示逐文件结果：
+Print per-file output:
 
 ```bash
 python3 compress_images.py ./images --verbose
 ```
 
-## 输出规则
+## Output Rules
 
-默认输出目录按输入数量和类型自动推断：
+The default output directory is inferred from the input shape:
 
-- 单个目录输入：输出到同级 `目录名_compressed`
-- 单个文件输入：输出到同级 `文件名_compressed`
-- 多输入混合场景：输出到当前目录下 `./compressed_output`
-- 多目录同时处理时：保留各自源目录名，避免重名冲突
+- single folder input: sibling directory named `foldername_compressed`
+- single file input: sibling directory named `filename_compressed`
+- multiple inputs: `./compressed_output`
+- multiple folders keep their source folder names inside the output root to avoid collisions
 
-额外规则：
+Additional rules:
 
-- 如果目标文件已存在，默认跳过
-- 配合 `--overwrite` 可覆盖已有输出
-- `--in-place` 与 `--output` 不能同时使用
+- existing targets are skipped by default
+- use `--overwrite` to replace existing outputs
+- `--in-place` and `--output` cannot be used together
 
-## 压缩策略
+## Compression Strategy
 
-- PNG：优先 `pngquant -> oxipng`
-- JPEG：优先 `mozjpeg/cjpeg`
-- WebP：优先 `cwebp`
-- AVIF：优先 `avifenc`
+- PNG: prefer `pngquant -> oxipng`
+- JPEG: prefer `mozjpeg/cjpeg`
+- WebP: prefer `cwebp`
+- AVIF: prefer `avifenc`
 
-回退逻辑：
+Fallback behavior:
 
-- PNG / WebP / AVIF：外部工具不可用时回退到 Pillow
-- JPEG：优先 `cjpeg`，其次在 macOS 下尝试 `sips`，再回退到 Pillow
+- PNG / WebP / AVIF: fall back to Pillow when external tools are missing
+- JPEG: prefer `cjpeg`, then try `sips` on macOS, then fall back to Pillow
 
-## 工具探测与回退机制
+## Tool Detection and Fallbacks
 
-执行时脚本会打印当前探测到的工具状态，例如：
+At runtime, the script prints the detected status of:
 
 - `pngquant`
 - `oxipng`
@@ -220,12 +221,12 @@ python3 compress_images.py ./images --verbose
 - `avifenc`
 - `pillow`
 
-这有两个作用：
+This helps with two things:
 
-- 帮助确认当前机器实际使用的是哪条压缩链路
-- 在压缩结果与预期不一致时，快速定位是否缺少本地编码器
+- verifying which compression path is actually being used on the current machine
+- diagnosing result differences caused by missing local encoders
 
-## 项目结构
+## Project Structure
 
 ```text
 .
@@ -233,16 +234,21 @@ python3 compress_images.py ./images --verbose
 |-- requirements-local.txt
 |-- README.md
 |-- README_EN.md
+|-- README_ZH.md
 `-- example/
     |-- panda.png
     `-- panda_compressed.png
 ```
 
-## 限制说明
+## Limitations
 
-- 本项目是本地 CLI 工具，不提供 Web 服务或 GUI
-- 不同格式的收益差异明显，PNG 通常最稳定
-- 对已经高度压缩的 JPEG、WebP、AVIF，二次压缩收益可能有限
-- 压缩结果受本地已安装编码器影响较大
+- This is a local CLI tool, not a web service or GUI app
+- Compression gains vary a lot by format, with PNG usually being the most stable case
+- Already heavily compressed JPEG, WebP, and AVIF inputs may see limited improvement
+- Final results depend heavily on which local encoders are installed
 
-如果你希望结果尽量稳定且接近 TinyPNG 风格，优先保证 `pngquant + oxipng + mozjpeg` 可用。
+If you want the most consistent TinyPNG-like behavior, make sure `pngquant + oxipng + mozjpeg` are available.
+
+## Links
+
+- linuxdo: https://linux.do/

@@ -1,6 +1,6 @@
 # tinypng-like-compressor
 
-[中文说明](./README.md)
+[中文说明](./README_ZH.md)
 
 A local-first batch image compression tool for UI screenshots, diagrams, marketing assets, and cover illustrations. In PNG-heavy workflows, its compression style and size reduction can often get reasonably close to typical TinyPNG output.
 
@@ -22,6 +22,7 @@ A local-first batch image compression tool for UI screenshots, diagrams, marketi
 - [Tool Detection and Fallbacks](#tool-detection-and-fallbacks)
 - [Project Structure](#project-structure)
 - [Limitations](#limitations)
+- [Links](#links)
 
 ## Overview
 
@@ -233,6 +234,7 @@ This helps with two things:
 |-- requirements-local.txt
 |-- README.md
 |-- README_EN.md
+|-- README_ZH.md
 `-- example/
     |-- panda.png
     `-- panda_compressed.png
@@ -246,3 +248,7 @@ This helps with two things:
 - Final results depend heavily on which local encoders are installed
 
 If you want the most consistent TinyPNG-like behavior, make sure `pngquant + oxipng + mozjpeg` are available.
+
+## Links
+
+- linuxdo: https://linux.do/
